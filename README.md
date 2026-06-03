@@ -8,59 +8,61 @@
 
 # 🎓 StudyAI
 
-StudyAI is a clean, minimal, and distraction-free AI-powered study workspace where students can upload PDF study materials and interact with them intelligently through chat.
+> AI-powered study workspace for chatting with PDFs using Gemini AI and Flask.
 
-Designed for focus and productivity, StudyAI allows users to query individual files or search across multiple documents simultaneously while keeping the interface simple and clutter-free.
+StudyAI is a clean, distraction-free AI study assistant that allows students to upload PDF study materials and interact with them through intelligent conversations.
+
+Users can query individual documents or search across multiple files simultaneously using natural language.
+
+Built for the **Agents League Hackathon 2026** hosted by Microsoft.
 
 ---
 
-## ✨ Features
+# 🚀 Features
 
-### 📚 Multi-File Chat Integration
+## 📚 Multi-File AI Chat
 
-* Chat with a single PDF or all uploaded files together
-* Cross-reference information between multiple study materials
+* Upload multiple PDF files
+* Chat with a single file or all files together
+* Cross-reference information across documents
 
-### 🧹 Distraction-Free Workspace
+## 💡 Smart Suggestions
 
-* Toggle sidebar visibility anytime
-* Hide raw extracted text panels for focused studying
+* Dynamic AI-generated study prompt chips
+* Faster and easier interaction
 
-### 💡 Smart Suggestion Chips
+## 🧹 Focus Mode
 
-* Automatically generates clickable study prompts after file parsing
+* Hide unnecessary panels
+* Distraction-free workspace
 
-### 📝 Session Notes Exporter
+## 📝 Session Export
 
-* Download your complete chat session as a `.txt` file
+* Download study conversations as `.txt` notes
 
-### 🔄 Workspace Reset
+## 🎨 Responsive UI
 
-* Instantly clear uploaded files and session data
-
-### 🎨 Responsive UI
-
-* Smooth dark/light theme support
-* Mobile-friendly responsive layout
-* Modern slide-and-fade animations
+* Dark & Light themes
+* Smooth animations
+* Mobile-friendly interface
 
 ---
 
 # 🛠️ Tech Stack
 
-| Layer          | Technology                      |
+| Category       | Technology                      |
 | -------------- | ------------------------------- |
 | Backend        | Python, Flask                   |
+| AI Model       | Gemini 3.5 Flash                |
+| AI SDK         | Google GenAI SDK                |
 | PDF Processing | PyPDF2                          |
-| AI Integration | Google GenAI SDK                |
-| Model          | `gemini-3.5-flash`              |
 | Frontend       | HTML5, CSS3, Vanilla JavaScript |
 
 ---
 
-# 🚀 Installation & Setup
+# ⚡ Installation
 
-## 1️⃣ Clone the Repository
+## 1️⃣ Clone Repository
 
 ```bash
 git clone https://github.com/sathidevivaraprasadreddy/StudyAI.git
@@ -71,31 +73,29 @@ cd StudyAI
 
 ## 2️⃣ Install Dependencies
 
-Make sure Python is installed on your system.
-
 ```bash
-pip install flask PyPDF2 google-genai python-dotenv
+pip install -r requirements.txt
 ```
 
 ---
 
 ## 3️⃣ Configure Environment Variables
 
-Create a file named `.env` in the root directory.
+Create a `.env` file in the root directory:
 
 ```env
-GEMINI_API_KEY=your_actual_api_key_here
+GEMINI_API_KEY=your_api_key_here
 ```
 
 ---
 
-## 4️⃣ Run the Application
+## 4️⃣ Run Application
 
 ```bash
 python app.py
 ```
 
-Open your browser and visit:
+Open:
 
 ```text
 http://127.0.0.1:5000
@@ -109,7 +109,14 @@ http://127.0.0.1:5000
 StudyAI/
 │
 ├── app.py
+├── requirements.txt
+├── README.md
+├── LICENSE
+├── .gitignore
+├── .env
+│
 ├── uploads/
+│
 ├── templates/
 │   └── index.html
 │
@@ -117,67 +124,88 @@ StudyAI/
 │   ├── style.css
 │   └── script.js
 │
-├── .env
-├── .gitignore
-└── README.md
-```
-
----
-
-# 🔒 Security
-
-Never push your `.env` file to GitHub.
-
-Add this to `.gitignore`:
-
-```gitignore
-.env
+├── img1.png
+├── img2.png
+│
+└── __pycache__/
 ```
 
 ---
 
 # 📸 Screenshots
 
-## Main Dashboard
+## Dashboard
+
 ![Dashboard](img1.png)
 
+## Chat Interface
 
-## Dark Theme
-![Dark Theme](img2.png)
-
-
+![Chat Interface](img2.png)
 
 ---
 
-# 🌟 Future Enhancements
+# 🏆 Hackathon Submission
+
+### Event
+
+Agents League Hackathon 2026
+
+### Hosted By
+
+Microsoft
+
+### Track
+
+Reasoning Agents
+
+### Focus
+
+AI-powered educational reasoning and document interaction.
+
+---
+
+# 🔒 Security
+
+Never upload your `.env` file publicly.
+
+Add this to `.gitignore`:
+
+```gitignore
+.env
+__pycache__/
+uploads/
+```
+
+---
+
+# 🌟 Future Improvements
 
 * OCR support for scanned PDFs
-* AI-generated flashcards
-* Quiz generation system
-* Voice assistant integration
-* User authentication
+* AI-generated quizzes
+* Flashcard generation
+* Voice interaction
 * Cloud sync support
 
 ---
 
 # 🤝 Contributing
 
-Contributions are welcome.
+Contributions and suggestions are welcome.
 
-1. Fork the repository
-2. Create a new branch
+1. Fork repository
+2. Create feature branch
 3. Commit changes
-4. Push the branch
-5. Open a Pull Request
+4. Open pull request
 
 ---
 
 # 📄 License
 
-This project is licensed under the MIT License.
+MIT License
 
 ---
 
 # ⭐ Support
 
-If you found this project useful, give it a star ⭐ on GitHub.
+If you found this project useful, consider giving it a star ⭐ on GitHub.
+
