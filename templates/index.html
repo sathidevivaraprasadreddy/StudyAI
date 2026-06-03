@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dark-theme">
+
+    <div id="layoutWrapper" class="dashboard-layout show-preview">
+        
+        <aside class="sidebar-left">
+            <div class="sidebar-header">
+                <h3>📁 Documents</h3>
+            </div>
+            <div id="fileList" class="file-list">
+                <div class="file-item active-file" id="allDocsNode" onclick="runContextSwitch('all_files_together')">
+                    🌐 All Files Combined
+                </div>
+                <div class="no-files-text" id="emptySidebarText">No files added yet. Drop a PDF on the right side.</div>
+            </div>
+            <button type="button" id="resetWorkspaceBtn" class="danger-btn">Reset Workspace</button>
+        </aside>
+
+        <main class="main-content">
+            <div class="header-row">
+                <h1>🎓 StudyAI</h1>
+                <div class="button-row-header">
+                    <button type="button" id="togglePreviewBtn" class="utility-btn">📋 Show/Hide Preview</button>
+                    <button type="button" id="themeToggleBtn" class="theme-btn">☀️ Light Mode</button>
+                </div>
+            </div>
+            <p class="subtitle">Read and chat with multiple files at once</p>
+            
+            <div class="card">
+                <h3>Upload Document</h3>
+                <div id="dropZone" class="drop-zone">
+                    <span id="dropZoneText" class="drop-zone-text">Drag and drop your PDF here, or click to choose a file</span>
+                    <input type="file" id="pdfFile" accept=".pdf" class="file-input">
+                </div>
+                <p id="uploadStatus" class="status"></p>
+            </div>
+
+            <div class="card">
+                <div class="chat-header-actions">
+                    <h3 id="currentChatLabel">Chats</h3>
+                    <button type="button" id="exportChatBtn" class="small-action-btn">📥 Export Chat</button>
+                </div>
+                <div id="chatHistory" class="chat-history">
+                    <div class="system-message">Welcome! Please upload a PDF document above to start chatting.</div>
+                </div>
+                
+                <div id="suggestionsRow" class="suggestions-row-container"></div>
+                
+                <div class="input-group">
+                    <input type="text" id="questionInput" placeholder="Ask a question about your files..." disabled>
+                    <button type="button" id="askBtn" disabled>Send</button>
+                </div>
+            </div>
+        </main>
+
+        <aside id="rightPreviewSidebar" class="sidebar-right">
+            <div class="sidebar-header-right">
+                <h3>🔍 Document Text Preview</h3>
+                <button type="button" id="closePreviewBtn" class="close-x-btn" title="Hide this panel">&times;</button>
+            </div>
+            <div id="indexPreviewBox" class="index-preview-box">
+                <div class="preview-placeholder">The raw text from your uploaded PDF will show up here.</div>
+            </div>
+        </aside>
+        
+    </div>
+
+    <script>
+        const zone = document.getElementById('dropZone');
+        const fInput = document.getElementById('pdfFile');
+        const statusField = document.getElementById('uploadStatus');
+        const chatWindow = document.getElementById('chatHistory');
+        const queryInput = document.getElementById('questionInput');
+        const sendBtn = document.getElementById('askBtn');
+        const toggleBtn = document.getElementById('themeToggleBtn');
+        const previewBox = document.getElementById('indexPreviewBox');
+        const suggestionsRow = document.getElementById('suggestionsRow');
+        const layoutWrapper = document.getElementById('layoutWrapper');
+        const closePreviewBtn = document.getElementById('closePreviewBtn');
+        const togglePreviewBtn = document.getElementById('togglePreviewBtn');
+        const exportChatBtn = document.getElementById('exportChatBtn');
+        const resetWorkspaceBtn = document.getElementById('resetWorkspaceBtn');
+        const appBody = document.body;
+
+        let fileCollection = [];
+
+        closePreviewBtn.onclick = () => layoutWrapper.classList.remove('show-preview');
+        togglePreviewBtn.onclick = () => layoutWrapper.classList.toggle('show-preview');
+
+        toggleBtn.addEventListener('click', () => {
+            if (appBody.classList.contains('dark-theme')) {
+                appBody.className = 'light-theme';
+                toggleBtn.innerText = '🌙 Dark Mode';
+            } else {
+                appBody.className = 'dark-theme';
+                toggleBtn.innerText = '☀️ Light Mode';
+            }
+        });
+
+        // Clean bullet formatter for professional look
+        function formatMarkdownBullets(rawText) {
+            return rawText.replace(/^\s*[\*•-]\s+(.+)$/gm, '• $1');
+        }
+
+        function appendMessage(sender, text) {
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${sender}-bubble`;
+            bubble.innerText = formatMarkdownBullets(text);
+            chatWindow.appendChild(bubble);
+            chatWindow.scrollTop = chatWindow.scrollHeight; 
+        }
+
+        function loadSuggestionChips(chipsArray) {
+            suggestionsRow.innerHTML = '';
+            if (!chipsArray || chipsArray.length === 0) return;
+            
+            chipsArray.forEach(promptText => {
+                const buttonChip = document.createElement('button');
+                buttonChip.className = 'suggestion-chip';
+                buttonChip.innerText = promptText;
+                buttonChip.onclick = () => {
+                    queryInput.value = promptText;
+                    dispatchQuestionPayload();
+                };
+                suggestionsRow.appendChild(buttonChip);
+            });
+        }
+
+        function syncSidebarUI(files, active) {
+            const listWrapper = document.getElementById('fileList');
+            const placeholderText = document.getElementById('emptySidebarText');
+            
+            if (placeholderText) placeholderText.remove();
+            
+            listWrapper.innerHTML = `
+                <div class="file-item ${active === 'all_files_together' ? 'active-file' : ''}" onclick="runContextSwitch('all_files_together')">
+                    🌐 All Files Combined
+                </div>
+            `;
+
+            files.forEach(name => {
+                const row = document.createElement('div');
+                row.className = `file-item ${name === active ? 'active-file' : ''}`;
+                row.innerText = `📄 ${name}`;
+                row.onclick = () => runContextSwitch(name);
+                listWrapper.appendChild(row);
+            });
+
+            document.getElementById('currentChatLabel').innerText = `Chat History ("${active}")`;
+        }
+
+        async function runContextSwitch(name) {
+            statusField.textContent = `Switching focus...`;
+            statusField.className = "status processing";
+
+            try {
+                const res = await fetch('/switch_file', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: name })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    statusField.textContent = `Viewing: ${name}`;
+                    statusField.className = "status success";
+                    chatWindow.innerHTML = `<div class="system-message success-msg">Switched over to "${name}".</div>`;
+                    
+                    fileCollection = data.available_files || fileCollection;
+                    syncSidebarUI(fileCollection, name);
+                    loadSuggestionChips(data.suggestions);
+                    
+                    previewBox.innerText = data.raw_text || "No text found inside this document.";
+                    
+                    // Improvement 1: Auto focus input on file switch
+                    queryInput.focus();
+                }
+            } catch (err) {
+                statusField.textContent = "Error changing files.";
+                statusField.className = "status error";
+            }
+        }
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evName => {
+            window.addEventListener(evName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+            zone.addEventListener(evName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+
+        zone.ondragover = () => zone.classList.add('drag-over');
+        zone.ondragleave = () => zone.classList.remove('drag-over');
+        
+        zone.ondrop = (e) => {
+            zone.classList.remove('drag-over');
+            const filesList = e.dataTransfer.files;
+            if (filesList.length > 0) {
+                fInput.files = filesList;
+                uploadFile(filesList[0]);
+            }
+        };
+
+        zone.onclick = () => fInput.click();
+        fInput.onchange = () => {
+            if (fInput.files.length > 0) uploadFile(fInput.files[0]);
+        };
+
+        async function uploadFile(fileObject) {
+            if (!fileObject.name.endsWith('.pdf')) {
+                statusField.textContent = "Please upload a valid PDF document.";
+                statusField.className = "status error";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileObject);
+            statusField.textContent = `Processing file...`;
+            statusField.className = "status processing";
+
+            try {
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                const jsonRes = await res.json();
+                
+                if (res.ok) {
+                    statusField.textContent = jsonRes.message;
+                    statusField.className = "status success";
+                    chatWindow.innerHTML = `<div class="system-message success-msg">Successfully connected to "${jsonRes.active_file}"!</div>`;
+                    
+                    fileCollection = jsonRes.available_files;
+                    syncSidebarUI(fileCollection, jsonRes.active_file);
+                    loadSuggestionChips(jsonRes.suggestions);
+                    
+                    previewBox.innerText = jsonRes.raw_text;
+                    
+                    queryInput.disabled = false;
+                    sendBtn.disabled = false;
+                    
+                    // Improvement 1: Auto focus input on upload finish
+                    queryInput.focus();
+                } else {
+                    statusField.textContent = jsonRes.error;
+                    statusField.className = "status error";
+                }
+            } catch (e) {
+                statusField.textContent = "An error occurred while uploading your file.";
+                statusField.className = "status error";
+            }
+        }
+
+        async function dispatchQuestionPayload() {
+            const queryStr = queryInput.value.trim();
+            if (!queryStr) return;
+
+            appendMessage('user', queryStr);
+            queryInput.value = '';
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: queryStr })
+                });
+                const responseData = await response.json();
+
+                if (response.ok) {
+                    appendMessage('ai', responseData.answer);
+                } else {
+                    appendMessage('system', "Error: " + responseData.error);
+                }
+                
+                // Keep input field focused after conversation streams finish
+                queryInput.focus();
+            } catch (err) {
+                appendMessage('system', "Failed to contact the AI model server.");
+            }
+        }
+
+        exportChatBtn.onclick = () => {
+            const messages = Array.from(chatWindow.querySelectorAll('.chat-bubble'));
+            if(messages.length === 0) return alert("No conversations to export yet.");
+            
+            let txtPayload = "=== CampusMind AI - Exported Session Study Notes ===\n\n";
+            messages.forEach(msg => {
+                const owner = msg.classList.contains('user-bubble') ? "USER: " : "AI: ";
+                txtPayload += `${owner}${msg.innerText}\n\n-------------------\n\n`;
+            });
+            
+            const linkBlob = new Blob([txtPayload], {type: 'text/plain'});
+            const dlLink = document.createElement('a');
+            dlLink.download = 'CampusMind_Study_Notes.txt';
+            dlLink.href = window.URL.createObjectURL(linkBlob);
+            dlLink.click();
+        };
+
+        resetWorkspaceBtn.onclick = async () => {
+            if(!confirm("Are you sure you want to clear out all uploaded documents and reset the active chat workspace memory?")) return;
+            try {
+                const res = await fetch('/reset', { method: 'POST' });
+                if(res.ok) {
+                    location.reload();
+                }
+            } catch (err) {
+                alert("Failed to clear current system workspace storage maps.");
+            }
+        };
+
+        sendBtn.onclick = dispatchQuestionPayload;
+        
+        // Improvement 2: Unified secure enter key listeners
+        queryInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !queryInput.disabled) {
+                e.preventDefault();
+                dispatchQuestionPayload();
+            }
+        });
+    </script>
+</body>
+</html>
