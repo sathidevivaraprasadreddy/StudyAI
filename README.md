@@ -1,5 +1,13 @@
 # 🎓 StudyAI
 
+![Python](https://img.shields.io/badge/Python-3.10-blue)
+![Flask](https://img.shields.io/badge/Flask-WebApp-black)
+![AI](https://img.shields.io/badge/AI-Gemini-orange)
+![Hackathon](https://img.shields.io/badge/Microsoft-Agents%20League%202026-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
+# 🎓 StudyAI
+
 StudyAI is a clean, minimal, and distraction-free AI-powered study workspace where students can upload PDF study materials and interact with them intelligently through chat.
 
 Designed for focus and productivity, StudyAI allows users to query individual files or search across multiple documents simultaneously while keeping the interface simple and clutter-free.
