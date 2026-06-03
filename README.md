@@ -131,16 +131,13 @@ Add this to `.gitignore`:
 # 📸 Screenshots
 
 ## Main Dashboard
+![Dashboard](img1.png)
 
-(Add screenshot here)
 
-## Chat Workspace
+## Dark Theme
+![Dark Theme](img2.png)
 
-(Add screenshot here)
 
-## Multi-File Query Mode
-
-(Add screenshot here)
 
 ---
 
